@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alarme Veicular</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0b0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #0b0d12; color: #e8eaed;
+    max-width: 520px; margin: 0 auto; padding: 16px; padding-bottom: 40px;
+  }
+
+  /* Cabeçalho */
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  header h1 { font-size: 1.25em; display: flex; align-items: center; gap: 8px; }
+  .estado-badge {
+    padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 0.85em;
+    background: #374151;
+  }
+  .estado-badge.desarmado { background: #14532d; color: #86efac; }
+  .estado-badge.armado    { background: #7f1d1d; color: #fca5a5; }
+  .estado-badge.disparado { background: #b91c1c; color: #fff; animation: pisca 0.6s infinite; }
+  .estado-badge.intermediario { background: #78350f; color: #fcd34d; }
+  @keyframes pisca { 50% { opacity: 0.4; } }
+
+  /* Barra de info */
+  .info-bar {
+    display: flex; gap: 16px; font-size: 0.85em; color: #9aa0a6;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .info-bar span { display: flex; align-items: center; gap: 5px; }
+  .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+  .online-dot.on { background: #22c55e; }
+
+  /* Grid de cards */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .card {
+    background: #151820; border: 1px solid #232733; border-radius: 14px; padding: 14px;
+  }
+  .card h2 { font-size: 0.8em; color: #9aa0a6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .linha { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 0.95em; }
+  .linha .valor { font-weight: 600; }
+  .ok { color: #22c55e; }
+  .alerta { color: #ef4444; }
+  .neutro { color: #9aa0a6; }
+
+  /* Card largo */
+  .card.full { grid-column: 1 / -1; }
+
+  /* Lista de eventos */
+  .eventos { max-height: 260px; overflow-y: auto; }
+  .evento {
+    display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #232733; font-size: 0.88em;
+  }
+  .evento:last-child { border-bottom: none; }
+  .evento .hora { color: #6b7280; white-space: nowrap; font-size: 0.85em; }
+  .evento .desc { flex: 1; }
+  .evento.disparo .desc, .evento.panico .desc { color: #fca5a5; font-weight: 600; }
+
+  .sem-dados { color: #6b7280; font-style: italic; font-size: 0.9em; padding: 8px 0; }
+
+  /* Botão atualizar */
+  .btn-atualizar {
+    width: 100%; padding: 14px; margin-bottom: 16px;
+    background: #1d4ed8; color: #fff; border: none; border-radius: 12px;
+    font-size: 1em; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.2s;
+  }
+  .btn-atualizar:active { background: #1e40af; }
+  .btn-atualizar:disabled { background: #374151; color: #9aa0a6; }
+  .btn-atualizar .girando { display: inline-block; animation: gira 0.8s linear infinite; }
+  @keyframes gira { 100% { transform: rotate(360deg); } }
+
+  /* Botões de comando */
+  .card.full h2 { margin-bottom: 12px; }
+  .botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-cmd {
+    padding: 14px; border: none; border-radius: 12px; font-size: 0.95em;
+    font-weight: 600; cursor: pointer; color: #fff; transition: opacity 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-cmd:active { opacity: 0.7; }
+  .btn-cmd:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-armar     { background: #b91c1c; }
+  .btn-desarmar  { background: #15803d; }
+  .btn-travar    { background: #334155; }
+  .btn-destravar { background: #334155; }
+  .btn-vidro     { background: #0e7490; }
+  .btn-panico    { background: #ea580c; grid-column: 1 / -1; }
+
+  /* Confirmação */
+  .confirma-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center; padding: 24px; z-index: 100;
+  }
+  .confirma-overlay.ativo { display: flex; }
+  .confirma-box { background: #151820; border-radius: 16px; padding: 24px; max-width: 320px; width: 100%; }
+  .confirma-box h3 { margin-bottom: 12px; }
+  .confirma-box p { color: #9aa0a6; font-size: 0.9em; margin-bottom: 20px; }
+  .confirma-acoes { display: flex; gap: 10px; }
+  .confirma-acoes button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .btn-cancelar { background: #334155; color: #fff; }
+  .btn-confirmar { background: #b91c1c; color: #fff; }
+</style>
+</head>
+<body>
+
+<div id="confirmaOverlay" class="confirma-overlay">
+  <div class="confirma-box">
+    <h3>🚨 Acionar Pânico?</h3>
+    <p>A sirene vai disparar imediatamente. Confirma?</p>
+    <div class="confirma-acoes">
+      <button class="btn-cancelar" onclick="fecharConfirma()">Cancelar</button>
+      <button class="btn-confirmar" onclick="executarPanico()">Sim, acionar</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1>🚗 Alarme</h1>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span id="estadoBadge" class="estado-badge">--</span>
+    <button onclick="sair()" style="background:#232733; color:#9aa0a6; border:none; border-radius:8px; padding:6px 10px; font-size:0.8em; cursor:pointer;">Sair</button>
+  </div>
+</header>
+
+<div class="info-bar">
+  <span><span id="onlineDot" class="online-dot"></span> <span id="onlineTexto">offline</span></span>
+  <span>📶 <span id="conexao">--</span></span>
+  <span>🕐 <span id="ultimaAtualizacao">--</span></span>
+</div>
+
+<button id="btnAtualizar" class="btn-atualizar" onclick="atualizar()">
+  🔄 Atualizar status
+</button>
+
+<div class="grid">
+  <!-- Portas -->
+  <div class="card">
+    <h2>🚪 Portas</h2>
+    <div class="linha"><span>Diant. Esq.</span><span class="valor" id="porta_de">--</span></div>
+    <div class="linha"><span>Diant. Dir.</span><span class="valor" id="porta_dd">--</span></div>
+    <div class="linha"><span>Tras. Esq.</span><span class="valor" id="porta_te">--</span></div>
+    <div class="linha"><span>Tras. Dir.</span><span class="valor" id="porta_td">--</span></div>
+  </div>
+
+  <!-- Segurança -->
+  <div class="card">
+    <h2>🔑 Segurança</h2>
+    <div class="linha"><span>Ignição</span><span class="valor" id="ignicao">--</span></div>
+    <div class="linha"><span>Bomba</span><span class="valor" id="bomba">--</span></div>
+    <div class="linha"><span>Motor</span><span class="valor" id="motor">--</span></div>
+    <div class="linha"><span>Vidro</span><span class="valor" id="vidro">--</span></div>
+  </div>
+
+  <!-- GPS -->
+  <div class="card full">
+    <h2>📍 GPS</h2>
+    <div class="linha"><span>Sinal</span><span class="valor" id="gps_fixo">--</span></div>
+    <div class="linha"><span>Velocidade</span><span class="valor" id="gps_vel">--</span></div>
+    <div class="linha"><span>Coordenadas</span><span class="valor" id="gps_coord">--</span></div>
+  </div>
+
+  <!-- Controles -->
+  <div class="card full">
+    <h2>🎮 Controles</h2>
+    <div class="botoes">
+      <button class="btn-cmd btn-armar" onclick="comando('armar')">🔒 Armar</button>
+      <button class="btn-cmd btn-desarmar" onclick="comando('desarmar')">🔓 Desarmar</button>
+      <button class="btn-cmd btn-travar" onclick="comando('travar')">🔐 Travar</button>
+      <button class="btn-cmd btn-destravar" onclick="comando('destravar')">🔓 Destravar</button>
+      <button class="btn-cmd btn-vidro" onclick="comando('vidro_subir')">⬆️ Subir vidro</button>
+      <button class="btn-cmd btn-vidro" onclick="comando('vidro_descer')">⬇️ Descer vidro</button>
+      <button class="btn-cmd btn-panico" onclick="confirmarPanico()">🚨 Pânico</button>
+    </div>
+  </div>
+
+  <!-- Eventos -->
+  <div class="card full">
+    <h2>📋 Eventos recentes</h2>
+    <div class="eventos" id="eventos">
+      <div class="sem-dados">Aguardando eventos...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Protege a página: sem token, volta pro login
+const token = sessionStorage.getItem("dash_token");
+if (!token) { location.href = "/"; }
+
+const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
+let ws;
+
+function conectar() {
+  // Envia o token na query string para o servidor validar a conexão
+  ws = new WebSocket(protocolo + "//" + location.host + "/?token=" + token);
+
+  ws.onopen = () => setOnline(true);
+  ws.onclose = (ev) => {
+    setOnline(false);
+    // Se foi rejeitado por token inválido, volta pro login
+    if (ev.code === 4001) {
+      sessionStorage.removeItem("dash_token");
+      location.href = "/";
+      return;
+    }
+    setTimeout(conectar, 3000);
+  };
+  ws.onmessage = (ev) => processar(JSON.parse(ev.data));
+}
+
+function sair() {
+  fetch("/api/logout", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + token },
+  });
+  sessionStorage.removeItem("dash_token");
+  location.href = "/";
+}
+
+function setOnline(on) {
+  document.getElementById("onlineDot").className = "online-dot" + (on ? " on" : "");
+  document.getElementById("onlineTexto").textContent = on ? "online" : "offline";
+  document.getElementById("btnAtualizar").disabled = !on;
+  // Desabilita também os botões de comando quando offline
+  document.querySelectorAll(".btn-cmd").forEach((b) => { b.disabled = !on; });
+}
+
+// Envia o comando "status" para o ESP32 via servidor
+function atualizar() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ acao: "comando", comando: { comando: "status" } }));
+
+  // Feedback visual: gira o ícone por 1 segundo
+  const btn = document.getElementById("btnAtualizar");
+  btn.innerHTML = '<span class="girando">🔄</span> Atualizando...';
+  setTimeout(() => { btn.innerHTML = "🔄 Atualizar status"; }, 1000);
+}
+
+// Envia um comando genérico ao ESP32
+function comando(nome) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    alert("Sem conexão com o servidor.");
+    return;
+  }
+  ws.send(JSON.stringify({ acao: "comando", comando: { comando: nome } }));
+
+  // Pede um status logo em seguida para refletir a mudança no painel
+  setTimeout(atualizar, 800);
+}
+
+// Pânico tem confirmação para evitar acionamento acidental
+function confirmarPanico() {
+  document.getElementById("confirmaOverlay").classList.add("ativo");
+}
+function fecharConfirma() {
+  document.getElementById("confirmaOverlay").classList.remove("ativo");
+}
+function executarPanico() {
+  comando("panico");
+  fecharConfirma();
+}
+
+// Nomes dos estados (igual ao firmware)
+const ESTADOS = ["DESARMADO","ARMANDO","ARMADO","DESARMANDO","DISPARADO","PANICO","COACAO","FALHA"];
+
+function classeEstado(n) {
+  if (n === 0) return "desarmado";
+  if (n === 2 || n === 5) return "armado";
+  if (n === 4) return "disparado";
+  return "intermediario";
+}
+
+function simNao(valor, inverter) {
+  // inverter=true: valor true é bom (verde); false: valor true é ruim (vermelho)
+  const bom = inverter ? !valor : valor;
+  return { texto: valor ? "Sim" : "Não", classe: bom ? "ok" : "alerta" };
+}
+
+function processar(msg) {
+  if (msg.tipo === "status" && msg.dados) {
+    atualizarStatus(msg.dados, msg.horario);
+  } else if (msg.tipo === "evento" && msg.dados) {
+    adicionarEvento(msg.dados, msg.horario);
+  } else if (msg.tipo === "conexao") {
+    const txt = msg.dados && msg.dados._texto ? msg.dados._texto : "";
+    // online/offline do próprio ESP32 (LWT)
+  }
+}
+
+function atualizarStatus(d, horario) {
+  // Estado
+  const badge = document.getElementById("estadoBadge");
+  badge.textContent = ESTADOS[d.estado] || "?";
+  badge.className = "estado-badge " + classeEstado(d.estado);
+
+  // Conexão e hora
+  if (d.conexao) document.getElementById("conexao").textContent = d.conexao.toUpperCase();
+  document.getElementById("ultimaAtualizacao").textContent = horario || "--";
+
+  // Portas (true = aberta = alerta vermelho)
+  setPorta("porta_de", d.porta_de);
+  setPorta("porta_dd", d.porta_dd);
+  setPorta("porta_te", d.porta_te);
+  setPorta("porta_td", d.porta_td);
+
+  // Ignição
+  const ign = document.getElementById("ignicao");
+  ign.textContent = d.ignicao ? "Ligada" : "Desligada";
+  ign.className = "valor " + (d.ignicao ? "alerta" : "ok");
+
+  // Bomba
+  const bomba = document.getElementById("bomba");
+  bomba.textContent = d.bomba_cortada ? "Cortada" : "Liberada";
+  bomba.className = "valor " + (d.bomba_cortada ? "alerta" : "ok");
+
+  // Motor
+  const motor = document.getElementById("motor");
+  motor.textContent = d.motor_parado ? "Parado" : "Ligado";
+  motor.className = "valor neutro";
+
+  // Vidro
+  const vidro = document.getElementById("vidro");
+  vidro.textContent = d.vidro_em_movimento ? "Movendo" : "Parado";
+  vidro.className = "valor neutro";
+
+  // GPS
+  const gpsFixo = document.getElementById("gps_fixo");
+  gpsFixo.textContent = d.gps_fixo ? "Com sinal" : "Sem sinal";
+  gpsFixo.className = "valor " + (d.gps_fixo ? "ok" : "neutro");
+
+  if (d.gps_fixo) {
+    document.getElementById("gps_vel").textContent = (d.gps_velocidade_kmh || 0).toFixed(1) + " km/h";
+    document.getElementById("gps_coord").textContent =
+      (d.gps_lat || 0).toFixed(5) + ", " + (d.gps_lon || 0).toFixed(5);
+  } else {
+    document.getElementById("gps_vel").textContent = "--";
+    document.getElementById("gps_coord").textContent = "--";
+  }
+}
+
+function setPorta(id, aberta) {
+  const el = document.getElementById(id);
+  el.textContent = aberta ? "Aberta" : "Fechada";
+  el.className = "valor " + (aberta ? "alerta" : "ok");
+}
+
+let primeiroEvento = true;
+function adicionarEvento(d, horario) {
+  const container = document.getElementById("eventos");
+  if (primeiroEvento) { container.innerHTML = ""; primeiroEvento = false; }
+
+  const div = document.createElement("div");
+  let classe = "evento";
+  if (d.tipo === "disparo") classe += " disparo";
+  if (d.tipo === "panico") classe += " panico";
+  div.className = classe;
+
+  // Extrai só a hora do timestamp ISO se disponível
+  let hora = horario || "";
+  div.innerHTML =
+    '<span class="hora">' + hora + '</span>' +
+    '<span class="desc">' + (d.descricao || d.tipo || "evento") + '</span>';
+
+  container.prepend(div);
+
+  // Limita a 30 eventos na tela
+  while (container.children.length > 30) {
+    container.removeChild(container.lastChild);
+  }
+}
+
+conectar();
+
+// Registra o service worker (necessário para o app ser instalável)
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(() => console.log("Service worker registrado"))
+    .catch((err) => console.error("Erro ao registrar service worker:", err));
+}
+</script>
+</body>
+</html>

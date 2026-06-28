@@ -1,0 +1,16 @@
+{
+  "name": "alarme-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard web (PWA) para o Alarme Veicular Inteligente ESP32",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.5.0",
+    "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
