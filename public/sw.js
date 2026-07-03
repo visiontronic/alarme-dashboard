@@ -8,7 +8,7 @@
 // pelo WebSocket. O cache aqui é só para os arquivos estáticos da
 // interface (HTML/ícones), para o app abrir mesmo com internet ruim.
 
-const CACHE_NOME = "alarme-v4";
+const CACHE_NOME = "alarme-v5";
 const ARQUIVOS_CACHE = [
   "/",
   "/login.html",
@@ -71,12 +71,10 @@ self.addEventListener("push", (evento) => {
       body: dados.corpo,
       icon: "/icon-192.png",
       badge: "/icon-192.png",
-      // Vibração longa e insistente (padrão de emergência, repete o ritmo)
-      vibrate: [300, 100, 300, 100, 300, 100, 300, 100, 300, 100, 300],
+      vibrate: [200, 100, 200, 100, 200], // padrão de vibração de alerta
       tag: "alarme-alerta",
       renotify: true,
       requireInteraction: true, // fica na tela até o usuário interagir
-      silent: false, // garante que use o som de notificação do sistema
     })
   );
 });
