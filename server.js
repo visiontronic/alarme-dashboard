@@ -210,7 +210,7 @@ clienteMqtt.on("connect", () => {
 
 clienteMqtt.on("message", (topico, payload) => {
   const mensagem = payload.toString();
-  const horario = new Date().toLocaleTimeString("pt-BR");
+  const horario = new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" });
   console.log(`[${horario}] mensagem em ${topico}`);
 
   const subtopico = topico.replace(TOPICO_BASE + "/", "");
