@@ -40,9 +40,51 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
 }
 
 // Inscricoes de push (navegadores/celulares que querem receber notificacoes).
-// Em memoria por enquanto - se o servidor reiniciar, os dispositivos
-// re-inscrevem automaticamente ao abrir o dashboard.
-const inscricoesPush = new Set();
+// Persistidas em arquivo para sobreviver a reinicios do servidor.
+const ARQUIVO_INSCRICOES = path.join(__dirname, "inscricoes-push.json");
+let inscricoesPush = [];
+
+// Carrega inscricoes salvas ao iniciar
+try {
+  if (fs.existsSync(ARQUIVO_INSCRICOES)) {
+    inscricoesPush = JSON.parse(fs.readFileSync(ARQUIVO_INSCRICOES, "utf8"));
+    console.log(`[PUSH] ${inscricoesPush.length} inscricao(oes) carregada(s) do disco`);
+  }
+} catch (e) {
+  console.error("[PUSH] Erro ao carregar inscricoes:", e.message);
+  inscricoesPush = [];
+}
+
+function salvarInscricoes() {
+  try {
+    fs.writeFileSync(ARQUIVO_INSCRICOES, JSON.stringify(inscricoesPush));
+  } catch (e) {
+    console.error("[PUSH] Erro ao salvar inscricoes:", e.message);
+  }
+}
+
+// Adiciona uma inscricao, evitando duplicatas (compara pelo endpoint)
+function adicionarInscricao(inscricao) {
+  if (!inscricao || !inscricao.endpoint) return;
+  const jaExiste = inscricoesPush.some((i) => i.endpoint === inscricao.endpoint);
+  if (!jaExiste) {
+    inscricoesPush.push(inscricao);
+    salvarInscricoes();
+    console.log(`[PUSH] Novo dispositivo inscrito (total: ${inscricoesPush.length})`);
+  } else {
+    console.log("[PUSH] Dispositivo ja inscrito (ignorado)");
+  }
+}
+
+// Remove uma inscricao pelo endpoint (quando expira/invalida)
+function removerInscricao(endpoint) {
+  const antes = inscricoesPush.length;
+  inscricoesPush = inscricoesPush.filter((i) => i.endpoint !== endpoint);
+  if (inscricoesPush.length !== antes) {
+    salvarInscricoes();
+    console.log(`[PUSH] Inscricao removida (total: ${inscricoesPush.length})`);
+  }
+}
 
 // Eventos que disparam notificacao push (violacoes de seguranca)
 const EVENTOS_PUSH = {
@@ -55,14 +97,21 @@ const EVENTOS_PUSH = {
 // Envia uma notificacao push para todos os dispositivos inscritos
 async function enviarPush(titulo, corpo) {
   if (!pushHabilitado) return;
+  if (inscricoesPush.length === 0) {
+    console.log("[PUSH] Nenhum dispositivo inscrito - notificacao nao enviada");
+    return;
+  }
   const payload = JSON.stringify({ titulo, corpo });
-  for (const inscricao of inscricoesPush) {
+  console.log(`[PUSH] Enviando "${titulo}" para ${inscricoesPush.length} dispositivo(s)`);
+
+  // Copia a lista para iterar com segurança (podemos remover durante o loop)
+  for (const inscricao of [...inscricoesPush]) {
     try {
       await webpush.sendNotification(inscricao, payload);
     } catch (err) {
-      // Inscricao invalida/expirada: remove
+      // Inscricao invalida/expirada: remove do disco
       if (err.statusCode === 410 || err.statusCode === 404) {
-        inscricoesPush.delete(inscricao);
+        removerInscricao(inscricao.endpoint);
       }
       console.error("[PUSH] Erro ao enviar:", err.statusCode || err.message);
     }
@@ -160,8 +209,7 @@ const servidorHttp = http.createServer(async (req, res) => {
     const corpo = await lerCorpo(req);
     try {
       const inscricao = JSON.parse(corpo);
-      inscricoesPush.add(inscricao);
-      console.log(`[PUSH] Novo dispositivo inscrito (total: ${inscricoesPush.size})`);
+      adicionarInscricao(inscricao);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
     } catch {
