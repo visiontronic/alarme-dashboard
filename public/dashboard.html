@@ -146,6 +146,10 @@
   🔔 Ativar notificações
 </button>
 
+<button id="btnSilenciar" class="btn-atualizar" style="background:#b91c1c;display:none" onclick="silenciarSirene()">
+  🔇 Silenciar sirene
+</button>
+
 <div class="grid">
   <!-- Portas -->
   <div class="card">
@@ -307,6 +311,13 @@ function atualizarStatus(d, horario) {
   badge.textContent = ESTADOS[d.estado] || "?";
   badge.className = "estado-badge " + classeEstado(d.estado);
 
+  // Sirene: toca quando DISPARADO (4) ou PANICO (5), para nos outros estados
+  if (d.estado === 4 || d.estado === 5) {
+    iniciarSirene();
+  } else {
+    pararSirene();
+  }
+
   // Conexão e hora
   if (d.conexao) document.getElementById("conexao").textContent = d.conexao.toUpperCase();
   document.getElementById("ultimaAtualizacao").textContent = horario || "--";
@@ -384,6 +395,81 @@ function adicionarEvento(d, horario) {
 }
 
 conectar();
+
+// ===================================================
+// SIRENE (sintetizada via Web Audio API - sobe e desce como sirene real)
+// ===================================================
+let audioCtx = null;
+let sireneOsc = null;
+let sireneGain = null;
+let sireneLfo = null;
+let sireneAtiva = false;
+
+// O navegador bloqueia áudio até a primeira interação do usuário.
+// Este "desbloqueio" cria o contexto de áudio no primeiro toque/clique.
+document.addEventListener("click", function desbloquearAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    } catch (e) {}
+  }
+  document.removeEventListener("click", desbloquearAudio);
+}, { once: true });
+
+function iniciarSirene() {
+  if (sireneAtiva) return; // já está tocando
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+
+    // Oscilador principal (o tom da sirene)
+    sireneOsc = audioCtx.createOscillator();
+    sireneOsc.type = "sawtooth";
+    sireneOsc.frequency.value = 700;
+
+    // LFO que faz a frequência subir e descer (efeito sirene)
+    sireneLfo = audioCtx.createOscillator();
+    sireneLfo.type = "sine";
+    sireneLfo.frequency.value = 0.8; // velocidade do sobe-desce
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 300; // amplitude da variação
+    sireneLfo.connect(lfoGain);
+    lfoGain.connect(sireneOsc.frequency);
+
+    // Volume
+    sireneGain = audioCtx.createGain();
+    sireneGain.gain.value = 0.3;
+
+    sireneOsc.connect(sireneGain);
+    sireneGain.connect(audioCtx.destination);
+
+    sireneOsc.start();
+    sireneLfo.start();
+    sireneAtiva = true;
+    document.getElementById("btnSilenciar").style.display = "flex";
+  } catch (e) {
+    console.error("Erro ao iniciar sirene:", e);
+  }
+}
+
+function pararSirene() {
+  if (!sireneAtiva) return;
+  try {
+    sireneOsc.stop();
+    sireneLfo.stop();
+    sireneOsc.disconnect();
+    sireneGain.disconnect();
+  } catch (e) {}
+  sireneAtiva = false;
+  document.getElementById("btnSilenciar").style.display = "none";
+}
+
+// Silencia a sirene manualmente sem desarmar o alarme.
+// (o alarme continua disparado; só o som do celular para)
+function silenciarSirene() {
+  pararSirene();
+}
 
 // Registra o service worker (necessário para o app ser instalável)
 let swRegistration = null;
