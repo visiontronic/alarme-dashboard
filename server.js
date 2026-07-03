@@ -14,12 +14,60 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { WebSocketServer } = require("ws");
+const webpush = require("web-push");
 
 // --- Configuracao ---
 const MQTT_BROKER = process.env.MQTT_BROKER || "mqtt://mqtt-dashboard.com:1883";
 const TOPICO_BASE = process.env.TOPICO_BASE || "alarme/carro01";
 const PORTA = process.env.PORT || 3000;
 const SENHA = process.env.DASHBOARD_SENHA || "alarme123"; // troque via env no Railway!
+
+// --- Push Notification (Web Push / VAPID) ---
+// As chaves VAPID vem de variaveis de ambiente. Gere uma vez com:
+//   npx web-push generate-vapid-keys
+// e coloque em VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY.
+const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY || "";
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || "";
+const VAPID_EMAIL = process.env.VAPID_EMAIL || "mailto:admin@exemplo.com";
+
+let pushHabilitado = false;
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
+  pushHabilitado = true;
+  console.log("[PUSH] Web Push habilitado");
+} else {
+  console.log("[PUSH] Web Push DESABILITADO (defina VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY)");
+}
+
+// Inscricoes de push (navegadores/celulares que querem receber notificacoes).
+// Em memoria por enquanto - se o servidor reiniciar, os dispositivos
+// re-inscrevem automaticamente ao abrir o dashboard.
+const inscricoesPush = new Set();
+
+// Eventos que disparam notificacao push (violacoes de seguranca)
+const EVENTOS_PUSH = {
+  disparo: "🚨 ALARME DISPARADO",
+  panico: "🚨 Pânico acionado",
+  vibracao_forte: "🚨 Possível tentativa de reboque",
+  coacao: "🚨 Alerta de coação",
+};
+
+// Envia uma notificacao push para todos os dispositivos inscritos
+async function enviarPush(titulo, corpo) {
+  if (!pushHabilitado) return;
+  const payload = JSON.stringify({ titulo, corpo });
+  for (const inscricao of inscricoesPush) {
+    try {
+      await webpush.sendNotification(inscricao, payload);
+    } catch (err) {
+      // Inscricao invalida/expirada: remove
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        inscricoesPush.delete(inscricao);
+      }
+      console.error("[PUSH] Erro ao enviar:", err.statusCode || err.message);
+    }
+  }
+}
 
 // Tokens de sessao validos (em memoria - reiniciar o servidor desloga todos)
 const tokensValidos = new Set();
@@ -91,6 +139,35 @@ const servidorHttp = http.createServer(async (req, res) => {
     tokensValidos.delete(token);
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // --- API: chave publica VAPID (para o navegador se inscrever) ---
+  if (rota === "/api/vapid-public" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ chave: VAPID_PUBLIC, habilitado: pushHabilitado }));
+    return;
+  }
+
+  // --- API: registrar inscricao de push (protegida) ---
+  if (rota === "/api/inscrever-push" && req.method === "POST") {
+    const token = extrairToken(req);
+    if (!tokenValido(token)) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false }));
+      return;
+    }
+    const corpo = await lerCorpo(req);
+    try {
+      const inscricao = JSON.parse(corpo);
+      inscricoesPush.add(inscricao);
+      console.log(`[PUSH] Novo dispositivo inscrito (total: ${inscricoesPush.size})`);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    } catch {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false }));
+    }
     return;
   }
 
@@ -226,6 +303,20 @@ clienteMqtt.on("message", (topico, payload) => {
     ultimasMensagens[subtopico] = pacote;
   }
   transmitirParaNavegadores(pacote);
+
+  // Dispara push notification para eventos de violação de segurança.
+  // O tipo do evento vem em dados.tipo (ex: "disparo", "panico").
+  if (subtopico === "evento" && dados && dados.tipo) {
+    const tituloPush = EVENTOS_PUSH[dados.tipo];
+    if (tituloPush) {
+      const corpo = dados.descricao || "Verifique seu veículo";
+      enviarPush(tituloPush, corpo);
+    }
+  }
+  // O alerta de coação vem em tópico próprio (retained)
+  if (subtopico === "coacao") {
+    enviarPush("🚨 Alerta de coação", "Desarme sob coação detectado");
+  }
 });
 
 clienteMqtt.on("error", (err) => console.error("[MQTT] Erro:", err.message));

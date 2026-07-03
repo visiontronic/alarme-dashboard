@@ -8,7 +8,7 @@
 // pelo WebSocket. O cache aqui é só para os arquivos estáticos da
 // interface (HTML/ícones), para o app abrir mesmo com internet ruim.
 
-const CACHE_NOME = "alarme-v2";
+const CACHE_NOME = "alarme-v3";
 const ARQUIVOS_CACHE = [
   "/",
   "/login.html",
@@ -55,5 +55,41 @@ self.addEventListener("fetch", (evento) => {
         return resposta;
       })
       .catch(() => caches.match(evento.request)) // offline: usa cache
+  );
+});
+
+// Push: recebe a notificação do servidor e mostra no dispositivo,
+// mesmo com o app fechado.
+self.addEventListener("push", (evento) => {
+  let dados = { titulo: "Alarme Veicular", corpo: "Novo alerta" };
+  try {
+    if (evento.data) dados = evento.data.json();
+  } catch {}
+
+  evento.waitUntil(
+    self.registration.showNotification(dados.titulo, {
+      body: dados.corpo,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      vibrate: [200, 100, 200, 100, 200], // padrão de vibração de alerta
+      tag: "alarme-alerta",
+      renotify: true,
+      requireInteraction: true, // fica na tela até o usuário interagir
+    })
+  );
+});
+
+// Ao tocar na notificação, abre/foca o dashboard
+self.addEventListener("notificationclick", (evento) => {
+  evento.notification.close();
+  evento.waitUntil(
+    clients.matchAll({ type: "window" }).then((lista) => {
+      for (const cliente of lista) {
+        if (cliente.url.includes("/dashboard") && "focus" in cliente) {
+          return cliente.focus();
+        }
+      }
+      if (clients.openWindow) return clients.openWindow("/dashboard");
+    })
   );
 });

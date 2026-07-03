@@ -142,6 +142,10 @@
   🔄 Atualizar status
 </button>
 
+<button id="btnNotificacoes" class="btn-atualizar" style="background:#7c3aed" onclick="ativarNotificacoes()">
+  🔔 Ativar notificações
+</button>
+
 <div class="grid">
   <!-- Portas -->
   <div class="card">
@@ -382,10 +386,70 @@ function adicionarEvento(d, horario) {
 conectar();
 
 // Registra o service worker (necessário para o app ser instalável)
+let swRegistration = null;
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js")
-    .then(() => console.log("Service worker registrado"))
+    .then((reg) => { swRegistration = reg; console.log("Service worker registrado"); })
     .catch((err) => console.error("Erro ao registrar service worker:", err));
+}
+
+// Converte a chave VAPID (base64) para o formato que o navegador espera
+function base64ParaUint8(base64) {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function ativarNotificacoes() {
+  const btn = document.getElementById("btnNotificacoes");
+
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+    alert("Seu navegador não suporta notificações.");
+    return;
+  }
+
+  try {
+    // 1. Pede permissão ao usuário
+    const permissao = await Notification.requestPermission();
+    if (permissao !== "granted") {
+      alert("Permissão de notificação negada.");
+      return;
+    }
+
+    // 2. Pega a chave pública VAPID do servidor
+    const rv = await fetch("/api/vapid-public");
+    const { chave, habilitado } = await rv.json();
+    if (!habilitado || !chave) {
+      alert("Notificações não estão configuradas no servidor.");
+      return;
+    }
+
+    // 3. Inscreve no push
+    const reg = swRegistration || (await navigator.serviceWorker.ready);
+    const inscricao = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: base64ParaUint8(chave),
+    });
+
+    // 4. Envia a inscrição para o servidor guardar
+    const r = await fetch("/api/inscrever-push?token=" + token, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(inscricao),
+    });
+
+    if (r.ok) {
+      btn.textContent = "🔔 Notificações ativas";
+      btn.style.background = "#15803d";
+      btn.disabled = true;
+    } else {
+      alert("Falha ao registrar notificações no servidor.");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao ativar notificações: " + e.message);
+  }
 }
 </script>
 </body>
