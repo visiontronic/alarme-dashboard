@@ -5,195 +5,242 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Alarme Veicular</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0b0d12">
+<meta name="theme-color" content="#0d0d0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    background: #0b0d12; color: #e8eaed;
-    max-width: 520px; margin: 0 auto; padding: 16px; padding-bottom: 40px;
+    background: #0d0d0f; color: #ececef;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    display: flex; justify-content: center; min-height: 100vh;
+  }
+  .wrap {
+    width: 100%; max-width: 430px; padding: 28px 24px 36px;
+    display: flex; flex-direction: column; gap: 24px;
   }
 
-  /* Cabeçalho */
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  header h1 { font-size: 1.25em; display: flex; align-items: center; gap: 8px; }
-  .estado-badge {
-    padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 0.85em;
-    background: #374151;
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; }
+  .header .titulo { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+  .header .sub { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
+  .online-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; display: inline-block; transition: background .3s; }
+  .online-dot.on { background: #4ade80; }
+  .header .sub span.txt { font-size: 12.5px; color: rgba(236,236,239,.45); }
+  .btn-sair {
+    font-size: 12.5px; padding: 8px 14px; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,.12); background: transparent;
+    color: rgba(236,236,239,.6); font-family: inherit; cursor: pointer; transition: all .15s;
   }
-  .estado-badge.desarmado { background: #14532d; color: #86efac; }
-  .estado-badge.armado    { background: #7f1d1d; color: #fca5a5; }
-  .estado-badge.disparado { background: #b91c1c; color: #fff; animation: pisca 0.6s infinite; }
-  .estado-badge.intermediario { background: #78350f; color: #fcd34d; }
-  @keyframes pisca { 50% { opacity: 0.4; } }
+  .btn-sair:hover { border-color: rgba(255,255,255,.3); color: #ececef; }
 
-  /* Barra de info */
-  .info-bar {
-    display: flex; gap: 16px; font-size: 0.85em; color: #9aa0a6;
-    margin-bottom: 16px; flex-wrap: wrap;
+  /* Chips de status */
+  .chips { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-size: 12px; padding: 7px 13px; border-radius: 99px;
+    background: #16161a; color: rgba(236,236,239,.65); transition: all .2s;
   }
-  .info-bar span { display: flex; align-items: center; gap: 5px; }
-  .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
-  .online-dot.on { background: #22c55e; }
+  .chip.alerta { background: #2a1416; color: #f87171; }
 
-  /* Grid de cards */
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .card {
-    background: #151820; border: 1px solid #232733; border-radius: 14px; padding: 14px;
+  /* Dial central */
+  .dial-area { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 10px 0; }
+  .dial {
+    width: 210px; height: 210px; border-radius: 50%; cursor: pointer;
+    background: radial-gradient(circle at 50% 38%, #1c1c22, #121216);
+    border: 1px solid #4ade8080;
+    box-shadow: 0 0 70px #4ade8020, inset 0 1px 0 rgba(255,255,255,.06);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    color: inherit; font-family: inherit;
+    transition: border-color .35s, box-shadow .35s, transform .1s;
   }
-  .card h2 { font-size: 0.8em; color: #9aa0a6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-  .linha { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 0.95em; }
-  .linha .valor { font-weight: 600; }
-  .ok { color: #22c55e; }
-  .alerta { color: #ef4444; }
-  .neutro { color: #9aa0a6; }
+  .dial:active { transform: scale(.97); }
+  .dial .luz { width: 12px; height: 12px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 14px #4ade80; transition: all .35s; }
+  .dial .estado-txt { font-size: 23px; font-weight: 700; letter-spacing: .06em; color: #4ade80; transition: color .35s; }
+  .dial .hint { font-size: 12px; color: rgba(236,236,239,.45); }
 
-  /* Card largo */
-  .card.full { grid-column: 1 / -1; }
-
-  /* Lista de eventos */
-  .eventos { max-height: 260px; overflow-y: auto; }
-  .evento {
-    display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #232733; font-size: 0.88em;
+  /* Ações rápidas */
+  .acoes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .acao { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .acao button {
+    width: 60px; height: 60px; border-radius: 50%; background: #16161a;
+    border: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: rgba(236,236,239,.75); cursor: pointer; font-family: inherit;
+    transition: transform .1s, border-color .15s;
   }
-  .evento:last-child { border-bottom: none; }
-  .evento .hora { color: #6b7280; white-space: nowrap; font-size: 0.85em; }
-  .evento .desc { flex: 1; }
-  .evento.disparo .desc, .evento.panico .desc { color: #fca5a5; font-weight: 600; }
+  .acao button:hover { border-color: rgba(255,255,255,.25); }
+  .acao button:active { transform: scale(.92); }
+  .acao button:disabled { opacity: .35; cursor: not-allowed; }
+  .acao span { font-size: 11px; color: rgba(236,236,239,.55); }
 
-  .sem-dados { color: #6b7280; font-style: italic; font-size: 0.9em; padding: 8px 0; }
-
-  /* Botão atualizar */
-  .btn-atualizar {
-    width: 100%; padding: 14px; margin-bottom: 16px;
-    background: #1d4ed8; color: #fff; border: none; border-radius: 12px;
-    font-size: 1em; font-weight: 600; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background 0.2s;
+  /* Toast */
+  .toast-area { display: flex; justify-content: center; min-height: 0; }
+  .toast {
+    font-size: 12.5px; padding: 8px 16px; border-radius: 99px;
+    background: rgba(255,255,255,.08); color: rgba(236,236,239,.8);
+    opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; pointer-events: none;
   }
-  .btn-atualizar:active { background: #1e40af; }
-  .btn-atualizar:disabled { background: #374151; color: #9aa0a6; }
-  .btn-atualizar .girando { display: inline-block; animation: gira 0.8s linear infinite; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Botões utilitários */
+  .util { display: flex; flex-direction: column; gap: 10px; }
+  .btn-util {
+    width: 100%; padding: 13px; border-radius: 12px; border: 1px solid rgba(255,255,255,.08);
+    background: #16161a; color: rgba(236,236,239,.8); font-size: 14px; font-weight: 500;
+    font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .15s;
+  }
+  .btn-util:hover { border-color: rgba(255,255,255,.2); }
+  .btn-util:active { transform: scale(.98); }
+  .btn-util:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-util .girando { display: inline-block; animation: gira .8s linear infinite; }
   @keyframes gira { 100% { transform: rotate(360deg); } }
 
-  /* Botões de comando */
-  .card.full h2 { margin-bottom: 12px; }
-  .botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .btn-cmd {
-    padding: 14px; border: none; border-radius: 12px; font-size: 0.95em;
-    font-weight: 600; cursor: pointer; color: #fff; transition: opacity 0.15s;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
+  /* Detalhes */
+  .card { border-radius: 16px; background: #131317; border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+  .card-head {
+    width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 16px;
+    background: transparent; border: none; color: inherit; font-family: inherit; cursor: pointer;
   }
-  .btn-cmd:active { opacity: 0.7; }
-  .btn-cmd:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-armar     { background: #b91c1c; }
-  .btn-desarmar  { background: #15803d; }
-  .btn-travar    { background: #334155; }
-  .btn-destravar { background: #334155; }
-  .btn-vidro     { background: #0e7490; }
-  .btn-panico    { background: #ea580c; grid-column: 1 / -1; }
+  .card-head .rotulo { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: rgba(236,236,239,.45); }
+  .card-head .chevron { font-size: 13px; color: rgba(236,236,239,.35); }
+  .card-body { padding: 0 16px 16px; display: none; }
+  .card-body.aberto { display: block; }
+  .linha-det {
+    display: flex; justify-content: space-between; padding: 10px 0;
+    border-top: 1px solid rgba(255,255,255,.05); font-size: 13.5px;
+  }
+  .linha-det .k { color: rgba(236,236,239,.5); }
+  .linha-det .v { color: #ececef; }
+  .linha-det .v.neutro { color: rgba(236,236,239,.4); }
+  .linha-det .v.alerta { color: #f87171; }
+  .linha-det .v.ok { color: #4ade80; }
 
-  /* Confirmação */
-  .confirma-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  /* Eventos */
+  .eventos-sec { display: flex; flex-direction: column; gap: 10px; padding: 0 4px; }
+  .eventos-titulo { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: rgba(236,236,239,.4); }
+  .evento { display: flex; gap: 12px; font-size: 13px; color: rgba(236,236,239,.6); }
+  .evento .t { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: rgba(236,236,239,.35); white-space: nowrap; }
+  .evento.disparo span:last-child, .evento.panico span:last-child { color: #f87171; }
+
+  /* Pânico */
+  .panic-area { display: flex; justify-content: center; margin-top: 6px; }
+  .btn-panic {
+    font-size: 13px; color: #f87171; background: transparent; border: none;
+    border-bottom: 1px solid rgba(248,113,113,.4); padding: 0 0 3px; font-family: inherit;
+    cursor: pointer; letter-spacing: .02em; transition: border-color .15s;
+  }
+  .btn-panic:hover { border-bottom-color: #f87171; }
+
+  /* Overlay de confirmação */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.75);
     display: none; align-items: center; justify-content: center; padding: 24px; z-index: 100;
   }
-  .confirma-overlay.ativo { display: flex; }
-  .confirma-box { background: #151820; border-radius: 16px; padding: 24px; max-width: 320px; width: 100%; }
-  .confirma-box h3 { margin-bottom: 12px; }
-  .confirma-box p { color: #9aa0a6; font-size: 0.9em; margin-bottom: 20px; }
-  .confirma-acoes { display: flex; gap: 10px; }
-  .confirma-acoes button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
-  .btn-cancelar { background: #334155; color: #fff; }
-  .btn-confirmar { background: #b91c1c; color: #fff; }
+  .overlay.ativo { display: flex; }
+  .overlay-box { background: #16161a; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; padding: 26px; max-width: 320px; width: 100%; }
+  .overlay-box h3 { font-size: 17px; margin-bottom: 10px; }
+  .overlay-box p { color: rgba(236,236,239,.55); font-size: 13.5px; margin-bottom: 22px; }
+  .overlay-acoes { display: flex; gap: 10px; }
+  .overlay-acoes button { flex: 1; padding: 13px; border: none; border-radius: 11px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-cancelar { background: #2a2a30; color: #ececef; }
+  .btn-confirmar { background: #dc2626; color: #fff; }
 </style>
 </head>
 <body>
 
-<div id="confirmaOverlay" class="confirma-overlay">
-  <div class="confirma-box">
+<div class="overlay" id="confirmaOverlay">
+  <div class="overlay-box">
     <h3>🚨 Acionar Pânico?</h3>
     <p>A sirene vai disparar imediatamente. Confirma?</p>
-    <div class="confirma-acoes">
+    <div class="overlay-acoes">
       <button class="btn-cancelar" onclick="fecharConfirma()">Cancelar</button>
       <button class="btn-confirmar" onclick="executarPanico()">Sim, acionar</button>
     </div>
   </div>
 </div>
 
-<header>
-  <h1>🚗 Alarme</h1>
-  <div style="display:flex; align-items:center; gap:10px;">
-    <span id="estadoBadge" class="estado-badge">--</span>
-    <button onclick="sair()" style="background:#232733; color:#9aa0a6; border:none; border-radius:8px; padding:6px 10px; font-size:0.8em; cursor:pointer;">Sair</button>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="titulo">🚗 Alarme</div>
+      <div class="sub">
+        <span class="online-dot" id="onlineDot"></span>
+        <span class="txt"><span id="onlineTexto">conectando</span> · <span id="conexao">--</span> · <span id="clock">--:--</span></span>
+      </div>
+    </div>
+    <button class="btn-sair" onclick="sair()">Sair</button>
   </div>
-</header>
 
-<div class="info-bar">
-  <span><span id="onlineDot" class="online-dot"></span> <span id="onlineTexto">offline</span></span>
-  <span>📶 <span id="conexao">--</span></span>
-  <span>🕐 <span id="ultimaAtualizacao">--</span></span>
-</div>
+  <!-- Chips -->
+  <div class="chips">
+    <span class="chip" id="chipPortas">Portas --</span>
+    <span class="chip" id="chipIgnicao">Ignição --</span>
+    <span class="chip" id="chipGps">GPS --</span>
+  </div>
 
-<button id="btnAtualizar" class="btn-atualizar" onclick="atualizar()">
-  🔄 Atualizar status
-</button>
+  <!-- Dial -->
+  <div class="dial-area">
+    <button class="dial" id="dial" onclick="toggleArmar()">
+      <span class="luz" id="dialLuz"></span>
+      <span class="estado-txt" id="dialEstado">--</span>
+      <span class="hint" id="dialHint">toque para armar</span>
+    </button>
+  </div>
 
-<button id="btnNotificacoes" class="btn-atualizar" style="background:#7c3aed" onclick="ativarNotificacoes()">
-  🔔 Ativar notificações
-</button>
+  <!-- Ações rápidas -->
+  <div class="acoes">
+    <div class="acao"><button class="btn-cmd" onclick="comando('travar')" title="Travar">⊙</button><span>Travar</span></div>
+    <div class="acao"><button class="btn-cmd" onclick="comando('destravar')" title="Destravar">◌</button><span>Destravar</span></div>
+    <div class="acao"><button class="btn-cmd" onclick="comando('vidro_subir')" title="Subir vidro">↑</button><span>Subir vidro</span></div>
+    <div class="acao"><button class="btn-cmd" onclick="comando('vidro_descer')" title="Descer vidro">↓</button><span>Descer vidro</span></div>
+  </div>
 
-<div class="grid">
-  <!-- Portas -->
+  <!-- Toast -->
+  <div class="toast-area"><span class="toast" id="toast"></span></div>
+
+  <!-- Utilitários -->
+  <div class="util">
+    <button class="btn-util" id="btnAtualizar" onclick="atualizar()">🔄 Atualizar status</button>
+    <button class="btn-util" id="btnNotificacoes" onclick="ativarNotificacoes()">🔔 Ativar notificações</button>
+  </div>
+
+  <!-- Detalhes -->
   <div class="card">
-    <h2>🚪 Portas</h2>
-    <div class="linha"><span>Diant. Esq.</span><span class="valor" id="porta_de">--</span></div>
-    <div class="linha"><span>Diant. Dir.</span><span class="valor" id="porta_dd">--</span></div>
-    <div class="linha"><span>Tras. Esq.</span><span class="valor" id="porta_te">--</span></div>
-    <div class="linha"><span>Tras. Dir.</span><span class="valor" id="porta_td">--</span></div>
-  </div>
-
-  <!-- Segurança -->
-  <div class="card">
-    <h2>🔑 Segurança</h2>
-    <div class="linha"><span>Ignição</span><span class="valor" id="ignicao">--</span></div>
-    <div class="linha"><span>Bomba</span><span class="valor" id="bomba">--</span></div>
-    <div class="linha"><span>Motor</span><span class="valor" id="motor">--</span></div>
-    <div class="linha"><span>Vidro</span><span class="valor" id="vidro">--</span></div>
-  </div>
-
-  <!-- GPS -->
-  <div class="card full">
-    <h2>📍 GPS</h2>
-    <div class="linha"><span>Sinal</span><span class="valor" id="gps_fixo">--</span></div>
-    <div class="linha"><span>Velocidade</span><span class="valor" id="gps_vel">--</span></div>
-    <div class="linha"><span>Coordenadas</span><span class="valor" id="gps_coord">--</span></div>
-  </div>
-
-  <!-- Controles -->
-  <div class="card full">
-    <h2>🎮 Controles</h2>
-    <div class="botoes">
-      <button class="btn-cmd btn-armar" onclick="comando('armar')">🔒 Armar</button>
-      <button class="btn-cmd btn-desarmar" onclick="comando('desarmar')">🔓 Desarmar</button>
-      <button class="btn-cmd btn-travar" onclick="comando('travar')">🔐 Travar</button>
-      <button class="btn-cmd btn-destravar" onclick="comando('destravar')">🔓 Destravar</button>
-      <button class="btn-cmd btn-vidro" onclick="comando('vidro_subir')">⬆️ Subir vidro</button>
-      <button class="btn-cmd btn-vidro" onclick="comando('vidro_descer')">⬇️ Descer vidro</button>
-      <button class="btn-cmd btn-panico" onclick="confirmarPanico()">🚨 Pânico</button>
+    <button class="card-head" onclick="toggleDetalhes()">
+      <span class="rotulo">Detalhes</span>
+      <span class="chevron" id="chevronDet">⌄</span>
+    </button>
+    <div class="card-body aberto" id="cardBodyDet">
+      <div class="linha-det"><span class="k">Porta diant. esq.</span><span class="v" id="porta_de">--</span></div>
+      <div class="linha-det"><span class="k">Porta diant. dir.</span><span class="v" id="porta_dd">--</span></div>
+      <div class="linha-det"><span class="k">Porta tras. esq.</span><span class="v" id="porta_te">--</span></div>
+      <div class="linha-det"><span class="k">Porta tras. dir.</span><span class="v" id="porta_td">--</span></div>
+      <div class="linha-det"><span class="k">Ignição</span><span class="v" id="ignicao">--</span></div>
+      <div class="linha-det"><span class="k">Bomba</span><span class="v" id="bomba">--</span></div>
+      <div class="linha-det"><span class="k">Motor</span><span class="v" id="motor">--</span></div>
+      <div class="linha-det"><span class="k">Vidro</span><span class="v" id="vidro">--</span></div>
+      <div class="linha-det"><span class="k">GPS</span><span class="v" id="gps_fixo">--</span></div>
     </div>
   </div>
 
   <!-- Eventos -->
-  <div class="card full">
-    <h2>📋 Eventos recentes</h2>
-    <div class="eventos" id="eventos">
-      <div class="sem-dados">Aguardando eventos...</div>
+  <div class="eventos-sec">
+    <span class="eventos-titulo">Eventos recentes</span>
+    <div id="eventos">
+      <div class="evento"><span class="t">--:--</span><span>Aguardando eventos...</span></div>
     </div>
   </div>
+
+  <!-- Pânico -->
+  <div class="panic-area">
+    <button class="btn-panic" onclick="confirmarPanico()">Acionar pânico</button>
+  </div>
+
 </div>
 
 <script>
@@ -203,15 +250,43 @@ if (!token) { location.href = "/"; }
 
 const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
 let ws;
+let estadoAtual = 0;
 
+const ESTADOS = ["DESARMADO","ARMANDO","ARMADO","DESARMANDO","DISPARADO","PANICO","COACAO","FALHA"];
+
+// Cores por estado
+const COR = {
+  desarmado: "#4ade80",
+  armado: "#f87171",
+  intermediario: "#fbbf24",
+  disparado: "#f87171",
+};
+
+function corDoEstado(n) {
+  if (n === 0) return COR.desarmado;
+  if (n === 2 || n === 5) return COR.armado;
+  if (n === 4) return COR.disparado;
+  return COR.intermediario;
+}
+
+// --- Relógio ---
+function tickClock() {
+  const d = new Date();
+  document.getElementById("clock").textContent = d.toTimeString().slice(0, 5);
+}
+tickClock();
+setInterval(tickClock, 10000);
+
+// --- WebSocket ---
 function conectar() {
-  // Envia o token na query string para o servidor validar a conexão
   ws = new WebSocket(protocolo + "//" + location.host + "/?token=" + token);
-
-  ws.onopen = () => setOnline(true);
+  ws.onopen = () => {
+    setOnline(true);
+    // Pede status assim que conecta (sincroniza ao abrir/reconectar)
+    setTimeout(atualizar, 300);
+  };
   ws.onclose = (ev) => {
     setOnline(false);
-    // Se foi rejeitado por token inválido, volta pro login
     if (ev.code === 4001) {
       sessionStorage.removeItem("dash_token");
       location.href = "/";
@@ -223,10 +298,7 @@ function conectar() {
 }
 
 function sair() {
-  fetch("/api/logout", {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + token },
-  });
+  fetch("/api/logout", { method: "POST", headers: { "Authorization": "Bearer " + token } });
   sessionStorage.removeItem("dash_token");
   location.href = "/";
 }
@@ -235,173 +307,146 @@ function setOnline(on) {
   document.getElementById("onlineDot").className = "online-dot" + (on ? " on" : "");
   document.getElementById("onlineTexto").textContent = on ? "online" : "offline";
   document.getElementById("btnAtualizar").disabled = !on;
-  // Desabilita também os botões de comando quando offline
   document.querySelectorAll(".btn-cmd").forEach((b) => { b.disabled = !on; });
+  document.getElementById("dial").style.pointerEvents = on ? "auto" : "none";
 }
 
-// Envia o comando "status" para o ESP32 via servidor
+// --- Toast ---
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// --- Comandos ---
 function atualizar() {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(JSON.stringify({ acao: "comando", comando: { comando: "status" } }));
-
-  // Feedback visual: gira o ícone por 1 segundo
   const btn = document.getElementById("btnAtualizar");
   btn.innerHTML = '<span class="girando">🔄</span> Atualizando...';
   setTimeout(() => { btn.innerHTML = "🔄 Atualizar status"; }, 1000);
 }
 
-// Envia um comando genérico ao ESP32
 function comando(nome) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    alert("Sem conexão com o servidor.");
-    return;
-  }
+  if (!ws || ws.readyState !== WebSocket.OPEN) { showToast("Sem conexão"); return; }
   ws.send(JSON.stringify({ acao: "comando", comando: { comando: nome } }));
-
-  // Pede um status logo em seguida para refletir a mudança no painel
+  const msgs = {
+    travar: "Portas travadas", destravar: "Portas destravadas",
+    vidro_subir: "Subindo vidros…", vidro_descer: "Descendo vidros…",
+    armar: "Armando sistema…", desarmar: "Sistema desarmado",
+  };
+  if (msgs[nome]) showToast(msgs[nome]);
   setTimeout(atualizar, 800);
 }
 
-// Pânico tem confirmação para evitar acionamento acidental
-function confirmarPanico() {
-  document.getElementById("confirmaOverlay").classList.add("ativo");
-}
-function fecharConfirma() {
-  document.getElementById("confirmaOverlay").classList.remove("ativo");
-}
-function executarPanico() {
-  comando("panico");
-  fecharConfirma();
+// Dial: arma se desarmado, desarma se armado
+function toggleArmar() {
+  if (estadoAtual === 0) comando("armar");
+  else comando("desarmar");
 }
 
-// Nomes dos estados (igual ao firmware)
-const ESTADOS = ["DESARMADO","ARMANDO","ARMADO","DESARMANDO","DISPARADO","PANICO","COACAO","FALHA"];
+// Pânico
+function confirmarPanico() { document.getElementById("confirmaOverlay").classList.add("ativo"); }
+function fecharConfirma() { document.getElementById("confirmaOverlay").classList.remove("ativo"); }
+function executarPanico() { comando("panico"); showToast("⚠ Pânico acionado"); fecharConfirma(); }
 
-function classeEstado(n) {
-  if (n === 0) return "desarmado";
-  if (n === 2 || n === 5) return "armado";
-  if (n === 4) return "disparado";
-  return "intermediario";
+// Detalhes
+function toggleDetalhes() {
+  const body = document.getElementById("cardBodyDet");
+  const chev = document.getElementById("chevronDet");
+  body.classList.toggle("aberto");
+  chev.textContent = body.classList.contains("aberto") ? "⌄" : "›";
 }
 
-function simNao(valor, inverter) {
-  // inverter=true: valor true é bom (verde); false: valor true é ruim (vermelho)
-  const bom = inverter ? !valor : valor;
-  return { texto: valor ? "Sim" : "Não", classe: bom ? "ok" : "alerta" };
-}
-
+// --- Processamento de mensagens ---
 function processar(msg) {
-  if (msg.tipo === "status" && msg.dados) {
-    atualizarStatus(msg.dados, msg.horario);
-  } else if (msg.tipo === "evento" && msg.dados) {
-    adicionarEvento(msg.dados, msg.horario);
-  } else if (msg.tipo === "conexao") {
-    const txt = msg.dados && msg.dados._texto ? msg.dados._texto : "";
-    // online/offline do próprio ESP32 (LWT)
-  }
+  if (msg.tipo === "status" && msg.dados) atualizarStatus(msg.dados, msg.horario);
+  else if (msg.tipo === "evento" && msg.dados) adicionarEvento(msg.dados, msg.horario);
 }
 
 function atualizarStatus(d, horario) {
-  // Estado
-  const badge = document.getElementById("estadoBadge");
-  badge.textContent = ESTADOS[d.estado] || "?";
-  badge.className = "estado-badge " + classeEstado(d.estado);
+  estadoAtual = d.estado;
+  const nome = ESTADOS[d.estado] || "?";
+  const cor = corDoEstado(d.estado);
+
+  // Dial
+  document.getElementById("dialEstado").textContent = nome;
+  document.getElementById("dialEstado").style.color = cor;
+  document.getElementById("dialLuz").style.background = cor;
+  document.getElementById("dialLuz").style.boxShadow = "0 0 14px " + cor;
+  const dial = document.getElementById("dial");
+  dial.style.borderColor = cor + "80";
+  dial.style.boxShadow = "0 0 70px " + cor + "20, inset 0 1px 0 rgba(255,255,255,.06)";
+  const hint = d.estado === 0 ? "toque para armar" : (d.estado === 2 ? "toque para desarmar" : "");
+  document.getElementById("dialHint").textContent = hint;
 
   // Conexão e hora
   if (d.conexao) document.getElementById("conexao").textContent = d.conexao.toUpperCase();
-  document.getElementById("ultimaAtualizacao").textContent = horario || "--";
 
-  // Portas (true = aberta = alerta vermelho)
+  // Chips
+  const algumaAberta = d.porta_de || d.porta_dd || d.porta_te || d.porta_td;
+  const chipP = document.getElementById("chipPortas");
+  chipP.textContent = algumaAberta ? "Porta aberta" : "Portas fechadas";
+  chipP.className = "chip" + (algumaAberta ? " alerta" : "");
+
+  const chipI = document.getElementById("chipIgnicao");
+  chipI.textContent = d.ignicao ? "Ignição ON" : "Ignição off";
+  chipI.className = "chip" + (d.ignicao ? " alerta" : "");
+
+  document.getElementById("chipGps").textContent = d.gps_fixo ? "GPS ok" : "GPS —";
+
+  // Detalhes
   setPorta("porta_de", d.porta_de);
   setPorta("porta_dd", d.porta_dd);
   setPorta("porta_te", d.porta_te);
   setPorta("porta_td", d.porta_td);
 
-  // Ignição
-  const ign = document.getElementById("ignicao");
-  ign.textContent = d.ignicao ? "Ligada" : "Desligada";
-  ign.className = "valor " + (d.ignicao ? "alerta" : "ok");
-
-  // Bomba
-  const bomba = document.getElementById("bomba");
-  bomba.textContent = d.bomba_cortada ? "Cortada" : "Liberada";
-  bomba.className = "valor " + (d.bomba_cortada ? "alerta" : "ok");
-
-  // Motor
-  const motor = document.getElementById("motor");
-  motor.textContent = d.motor_parado ? "Parado" : "Ligado";
-  motor.className = "valor neutro";
-
-  // Vidro
-  const vidro = document.getElementById("vidro");
-  vidro.textContent = d.vidro_em_movimento ? "Movendo" : "Parado";
-  vidro.className = "valor neutro";
-
-  // GPS
-  const gpsFixo = document.getElementById("gps_fixo");
-  gpsFixo.textContent = d.gps_fixo ? "Com sinal" : "Sem sinal";
-  gpsFixo.className = "valor " + (d.gps_fixo ? "ok" : "neutro");
-
-  if (d.gps_fixo) {
-    document.getElementById("gps_vel").textContent = (d.gps_velocidade_kmh || 0).toFixed(1) + " km/h";
-    document.getElementById("gps_coord").textContent =
-      (d.gps_lat || 0).toFixed(5) + ", " + (d.gps_lon || 0).toFixed(5);
-  } else {
-    document.getElementById("gps_vel").textContent = "--";
-    document.getElementById("gps_coord").textContent = "--";
-  }
+  setVal("ignicao", d.ignicao ? "Ligada" : "Desligada", d.ignicao ? "alerta" : "");
+  setVal("bomba", d.bomba_cortada ? "Cortada" : "Liberada", d.bomba_cortada ? "alerta" : "");
+  setVal("motor", d.motor_parado ? "Parado" : "Ligado", "neutro");
+  setVal("vidro", d.vidro_em_movimento ? "Movendo" : "Parado", "neutro");
+  setVal("gps_fixo", d.gps_fixo ? "Com sinal" : "Sem sinal", d.gps_fixo ? "ok" : "neutro");
 }
 
 function setPorta(id, aberta) {
+  setVal(id, aberta ? "Aberta" : "Fechada", aberta ? "alerta" : "");
+}
+function setVal(id, texto, classe) {
   const el = document.getElementById(id);
-  el.textContent = aberta ? "Aberta" : "Fechada";
-  el.className = "valor " + (aberta ? "alerta" : "ok");
+  el.textContent = texto;
+  el.className = "v" + (classe ? " " + classe : "");
 }
 
 let primeiroEvento = true;
 function adicionarEvento(d, horario) {
-  const container = document.getElementById("eventos");
-  if (primeiroEvento) { container.innerHTML = ""; primeiroEvento = false; }
-
+  const cont = document.getElementById("eventos");
+  if (primeiroEvento) { cont.innerHTML = ""; primeiroEvento = false; }
   const div = document.createElement("div");
-  let classe = "evento";
-  if (d.tipo === "disparo") classe += " disparo";
-  if (d.tipo === "panico") classe += " panico";
-  div.className = classe;
-
-  // Extrai só a hora do timestamp ISO se disponível
-  let hora = horario || "";
-  div.innerHTML =
-    '<span class="hora">' + hora + '</span>' +
-    '<span class="desc">' + (d.descricao || d.tipo || "evento") + '</span>';
-
-  container.prepend(div);
-
-  // Limita a 30 eventos na tela
-  while (container.children.length > 30) {
-    container.removeChild(container.lastChild);
-  }
+  let cls = "evento";
+  if (d.tipo === "disparo") cls += " disparo";
+  if (d.tipo === "panico") cls += " panico";
+  div.className = cls;
+  div.innerHTML = '<span class="t">' + (horario || "") + '</span><span>' + (d.descricao || d.tipo || "evento") + '</span>';
+  cont.prepend(div);
+  while (cont.children.length > 20) cont.removeChild(cont.lastChild);
 }
 
 conectar();
 
-// Registra o service worker e tenta re-inscrever automaticamente
+// --- Service worker + push ---
 let swRegistration = null;
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js")
     .then((reg) => {
       swRegistration = reg;
-      console.log("Service worker registrado");
-      // Se a permissão já foi concedida antes, re-inscreve silenciosamente
-      // (resolve o problema de ter que clicar no botão toda vez)
-      if (Notification.permission === "granted") {
-        inscreverPush(true); // true = silencioso (sem alertas)
-      }
+      if (Notification.permission === "granted") inscreverPush(true);
     })
-    .catch((err) => console.error("Erro ao registrar service worker:", err));
+    .catch((err) => console.error("Erro SW:", err));
 }
 
-// Converte a chave VAPID (base64) para o formato que o navegador espera
 function base64ParaUint8(base64) {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -409,63 +454,44 @@ function base64ParaUint8(base64) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-// Faz a inscrição no push. Se silencioso=true, não mostra alertas
-// (usado na re-inscrição automática ao abrir o app).
 async function inscreverPush(silencioso) {
   const btn = document.getElementById("btnNotificacoes");
   try {
-    // Pega a chave pública VAPID do servidor
     const rv = await fetch("/api/vapid-public");
     const { chave, habilitado } = await rv.json();
-    if (!habilitado || !chave) {
-      if (!silencioso) alert("Notificações não estão configuradas no servidor.");
-      return false;
-    }
-
-    // Inscreve no push (se já estiver inscrito, o navegador retorna a mesma)
+    if (!habilitado || !chave) { if (!silencioso) showToast("Push não configurado no servidor"); return false; }
     const reg = swRegistration || (await navigator.serviceWorker.ready);
     const inscricao = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: base64ParaUint8(chave),
     });
-
-    // Envia a inscrição para o servidor guardar
     const r = await fetch("/api/inscrever-push?token=" + token, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(inscricao),
     });
-
     if (r.ok) {
       btn.textContent = "🔔 Notificações ativas";
-      btn.style.background = "#15803d";
+      btn.style.background = "#14352a";
+      btn.style.color = "#4ade80";
       btn.disabled = true;
       return true;
-    } else {
-      if (!silencioso) alert("Falha ao registrar notificações no servidor.");
-      return false;
     }
+    if (!silencioso) showToast("Falha ao registrar push");
+    return false;
   } catch (e) {
-    console.error("Erro ao inscrever push:", e);
-    if (!silencioso) alert("Erro ao ativar notificações: " + e.message);
+    console.error("Erro push:", e);
+    if (!silencioso) showToast("Erro ao ativar push");
     return false;
   }
 }
 
-// Chamado pelo botão: pede permissão e inscreve
 async function ativarNotificacoes() {
   if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-    alert("Seu navegador não suporta notificações.");
-    return;
+    showToast("Navegador não suporta notificações"); return;
   }
-
   const permissao = await Notification.requestPermission();
-  if (permissao !== "granted") {
-    alert("Permissão de notificação negada. Ative nas configurações do navegador.");
-    return;
-  }
-
-  await inscreverPush(false); // false = mostra alertas de erro se houver
+  if (permissao !== "granted") { showToast("Permissão negada"); return; }
+  await inscreverPush(false);
 }
 </script>
 </body>
