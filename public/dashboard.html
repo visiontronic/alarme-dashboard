@@ -22,8 +22,6 @@
     width: 100%; max-width: 430px; padding: 28px 24px 36px;
     display: flex; flex-direction: column; gap: 24px;
   }
-
-  /* Header */
   .header { display: flex; align-items: center; justify-content: space-between; }
   .header .titulo { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
   .header .sub { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
@@ -36,8 +34,6 @@
     color: rgba(236,236,239,.6); font-family: inherit; cursor: pointer; transition: all .15s;
   }
   .btn-sair:hover { border-color: rgba(255,255,255,.3); color: #ececef; }
-
-  /* Ícones do header */
   .header-acoes { display: flex; align-items: center; gap: 8px; }
   .icon-btn {
     width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -48,19 +44,12 @@
   .icon-btn:active { transform: scale(.9); }
   .icon-btn:disabled { opacity: .4; cursor: not-allowed; }
   .icon-btn.girando svg { animation: gira .8s linear infinite; }
-  /* Sino ativo (notificações ligadas) */
   .icon-btn.ativo { background: #14352a; border-color: #4ade8055; color: #4ade80; }
   @keyframes gira { 100% { transform: rotate(360deg); } }
-
-  /* Chips de status */
   .chips { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-  .chip {
-    font-size: 12px; padding: 7px 13px; border-radius: 99px;
-    background: #16161a; color: rgba(236,236,239,.65); transition: all .2s;
-  }
+  .chip { font-size: 12px; padding: 7px 13px; border-radius: 99px; background: #16161a; color: rgba(236,236,239,.65); transition: all .2s; }
   .chip.alerta { background: #2a1416; color: #f87171; }
-
-  /* Dial central */
+  .chip.emergencia { background: #2a1a0a; color: #fb923c; }
   .dial-area { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 10px 0; }
   .dial {
     width: 210px; height: 210px; border-radius: 50%; cursor: pointer;
@@ -75,8 +64,6 @@
   .dial .luz { width: 12px; height: 12px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 14px #4ade80; transition: all .35s; }
   .dial .estado-txt { font-size: 23px; font-weight: 700; letter-spacing: .06em; color: #4ade80; transition: color .35s; }
   .dial .hint { font-size: 12px; color: rgba(236,236,239,.45); }
-
-  /* Ações rápidas */
   .acoes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .acao { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .acao button {
@@ -89,8 +76,6 @@
   .acao button:active { transform: scale(.92); }
   .acao button:disabled { opacity: .35; cursor: not-allowed; }
   .acao span { font-size: 11px; color: rgba(236,236,239,.55); }
-
-  /* Toast */
   .toast-area { display: flex; justify-content: center; min-height: 0; }
   .toast {
     font-size: 12.5px; padding: 8px 16px; border-radius: 99px;
@@ -98,8 +83,6 @@
     opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; pointer-events: none;
   }
   .toast.show { opacity: 1; transform: translateY(0); }
-
-  /* Detalhes */
   .card { border-radius: 16px; background: #131317; border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
   .card-head {
     width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 16px;
@@ -119,14 +102,40 @@
   .linha-det .v.alerta { color: #f87171; }
   .linha-det .v.ok { color: #4ade80; }
 
-  /* Eventos */
+  /* Cards de ação (emergência + combustível) */
+  .card-acao { border-radius: 16px; border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+  .card-acao.emergencia-card { background: #150f0f; border-color: rgba(248,113,113,.12); }
+  .card-acao.combustivel-card { background: #0f1215; border-color: rgba(251,191,36,.1); }
+  .card-acao-head { padding: 14px 16px 0; }
+  .card-acao-head .rotulo { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: rgba(236,236,239,.35); }
+  .card-acao-body { padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .btn-acao {
+    width: 100%; padding: 13px 16px; border-radius: 12px; border: none;
+    font-size: 13.5px; font-weight: 600; font-family: inherit;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn-acao:active { transform: scale(.98); opacity: .85; }
+  .btn-acao:disabled { opacity: .35; cursor: not-allowed; }
+  .btn-acao.emergencia { background: #dc2626; color: #fff; }
+  .btn-acao.solicitar { background: #78350f; color: #fcd34d; }
+  .btn-acao.confirmar { background: #dc2626; color: #fff; }
+  .btn-acao.liberar { background: #14532d; color: #86efac; }
+  .btn-acao-desc {
+    font-size: 12px; color: rgba(236,236,239,.35); text-align: center; padding: 0 4px;
+  }
+  /* Timer de confirmação do corte */
+  .timer-corte {
+    font-size: 12px; color: #fbbf24; text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
   .eventos-sec { display: flex; flex-direction: column; gap: 10px; padding: 0 4px; }
   .eventos-titulo { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: rgba(236,236,239,.4); }
   .evento { display: flex; gap: 12px; font-size: 13px; color: rgba(236,236,239,.6); }
   .evento .t { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: rgba(236,236,239,.35); white-space: nowrap; }
   .evento.disparo span:last-child, .evento.panico span:last-child { color: #f87171; }
-
-  /* Pânico */
+  .evento.emergencia span:last-child { color: #fb923c; }
   .panic-area { display: flex; justify-content: center; margin-top: 6px; }
   .btn-panic {
     font-size: 13px; color: #f87171; background: transparent; border: none;
@@ -134,8 +143,6 @@
     cursor: pointer; letter-spacing: .02em; transition: border-color .15s;
   }
   .btn-panic:hover { border-bottom-color: #f87171; }
-
-  /* Overlay de confirmação */
   .overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.75);
     display: none; align-items: center; justify-content: center; padding: 24px; z-index: 100;
@@ -147,18 +154,31 @@
   .overlay-acoes { display: flex; gap: 10px; }
   .overlay-acoes button { flex: 1; padding: 13px; border: none; border-radius: 11px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .btn-cancelar { background: #2a2a30; color: #ececef; }
-  .btn-confirmar { background: #dc2626; color: #fff; }
+  .btn-confirmar-overlay { background: #dc2626; color: #fff; }
 </style>
 </head>
 <body>
 
+<!-- Overlay pânico -->
 <div class="overlay" id="confirmaOverlay">
   <div class="overlay-box">
     <h3>🚨 Acionar Pânico?</h3>
     <p>A sirene vai disparar imediatamente. Confirma?</p>
     <div class="overlay-acoes">
       <button class="btn-cancelar" onclick="fecharConfirma()">Cancelar</button>
-      <button class="btn-confirmar" onclick="executarPanico()">Sim, acionar</button>
+      <button class="btn-confirmar-overlay" onclick="executarPanico()">Sim, acionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay emergência -->
+<div class="overlay" id="emergenciaOverlay">
+  <div class="overlay-box">
+    <h3>🚨 Modo Emergência?</h3>
+    <p>As portas serão travadas imediatamente. Quando o carro reduzir a velocidade (ou após 2 min), o combustível será cortado, o imobilizador ativado e a sirene disparada. Só desative ao desarmar o alarme.</p>
+    <div class="overlay-acoes">
+      <button class="btn-cancelar" onclick="fecharEmergencia()">Cancelar</button>
+      <button class="btn-confirmar-overlay" onclick="executarEmergencia()">Ativar</button>
     </div>
   </div>
 </div>
@@ -176,13 +196,13 @@
     </div>
     <div class="header-acoes">
       <button class="icon-btn" id="btnAtualizar" onclick="atualizar()" title="Atualizar status" aria-label="Atualizar status">
-        <svg id="iconeAtualizar" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
           <polyline points="21 3 21 9 15 9"></polyline>
         </svg>
       </button>
       <button class="icon-btn" id="btnNotificacoes" onclick="ativarNotificacoes()" title="Notificações" aria-label="Ativar notificações">
-        <svg id="iconeSino" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
         </svg>
@@ -195,7 +215,8 @@
   <div class="chips">
     <span class="chip" id="chipPortas">Portas --</span>
     <span class="chip" id="chipIgnicao">Ignição --</span>
-    <span class="chip" id="chipGps">GPS --</span>
+    <span class="chip" id="chipGps">GPS —</span>
+    <span class="chip" id="chipEmergencia" style="display:none">🚨 EMERGÊNCIA</span>
   </div>
 
   <!-- Dial -->
@@ -209,14 +230,43 @@
 
   <!-- Ações rápidas -->
   <div class="acoes">
-    <div class="acao"><button class="btn-cmd" onclick="comando('travar')" title="Travar">⊙</button><span>Travar</span></div>
-    <div class="acao"><button class="btn-cmd" onclick="comando('destravar')" title="Destravar">◌</button><span>Destravar</span></div>
-    <div class="acao"><button class="btn-cmd" onclick="comando('vidro_subir')" title="Subir vidro">↑</button><span>Subir vidro</span></div>
-    <div class="acao"><button class="btn-cmd" onclick="comando('vidro_descer')" title="Descer vidro">↓</button><span>Descer vidro</span></div>
+    <div class="acao"><button class="btn-cmd" onclick="comando('travar')">⊙</button><span>Travar</span></div>
+    <div class="acao"><button class="btn-cmd" onclick="comando('destravar')">◌</button><span>Destravar</span></div>
+    <div class="acao"><button class="btn-cmd" onclick="comando('vidro_subir')">↑</button><span>Subir vidro</span></div>
+    <div class="acao"><button class="btn-cmd" onclick="comando('vidro_descer')">↓</button><span>Descer vidro</span></div>
   </div>
 
   <!-- Toast -->
   <div class="toast-area"><span class="toast" id="toast"></span></div>
+
+  <!-- Card Emergência -->
+  <div class="card-acao emergencia-card">
+    <div class="card-acao-head"><span class="rotulo">⚡ Emergência</span></div>
+    <div class="card-acao-body">
+      <button class="btn-acao emergencia" id="btnEmergencia" onclick="confirmarEmergencia()">
+        🚨 Modo Emergência (Assalto)
+      </button>
+      <p class="btn-acao-desc" id="descEmergencia">Trava portas e corta o carro quando parar</p>
+    </div>
+  </div>
+
+  <!-- Card Combustível -->
+  <div class="card-acao combustivel-card">
+    <div class="card-acao-head"><span class="rotulo">⛽ Combustível</span></div>
+    <div class="card-acao-body">
+      <button class="btn-acao solicitar" id="btnSolicitar" onclick="solicitarCorte()">
+        1. Solicitar corte
+      </button>
+      <button class="btn-acao confirmar" id="btnConfirmar" onclick="confirmarCorte()" style="display:none">
+        2. Confirmar corte
+      </button>
+      <div class="timer-corte" id="timerCorte" style="display:none"></div>
+      <button class="btn-acao liberar" id="btnLiberar" onclick="comando('liberar_combustivel')" style="display:none">
+        ✅ Liberar combustível
+      </button>
+      <p class="btn-acao-desc" id="descCombustivel">Motor deve estar parado</p>
+    </div>
+  </div>
 
   <!-- Detalhes -->
   <div class="card">
@@ -253,23 +303,17 @@
 </div>
 
 <script>
-// Protege a página: sem token, volta pro login
 const token = sessionStorage.getItem("dash_token");
 if (!token) { location.href = "/"; }
 
 const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
 let ws;
 let estadoAtual = 0;
+let timerCorteInterval = null;
+let marcaTempoCorte = null;
 
 const ESTADOS = ["DESARMADO","ARMANDO","ARMADO","DESARMANDO","DISPARADO","PANICO","COACAO","FALHA"];
-
-// Cores por estado
-const COR = {
-  desarmado: "#4ade80",
-  armado: "#f87171",
-  intermediario: "#fbbf24",
-  disparado: "#f87171",
-};
+const COR = { desarmado: "#4ade80", armado: "#f87171", intermediario: "#fbbf24", disparado: "#f87171" };
 
 function corDoEstado(n) {
   if (n === 0) return COR.desarmado;
@@ -278,29 +322,18 @@ function corDoEstado(n) {
   return COR.intermediario;
 }
 
-// --- Relógio ---
 function tickClock() {
-  const d = new Date();
-  document.getElementById("clock").textContent = d.toTimeString().slice(0, 5);
+  document.getElementById("clock").textContent = new Date().toTimeString().slice(0, 5);
 }
 tickClock();
 setInterval(tickClock, 10000);
 
-// --- WebSocket ---
 function conectar() {
   ws = new WebSocket(protocolo + "//" + location.host + "/?token=" + token);
-  ws.onopen = () => {
-    setOnline(true);
-    // Pede status assim que conecta (sincroniza ao abrir/reconectar)
-    setTimeout(atualizar, 300);
-  };
+  ws.onopen = () => { setOnline(true); setTimeout(atualizar, 300); };
   ws.onclose = (ev) => {
     setOnline(false);
-    if (ev.code === 4001) {
-      sessionStorage.removeItem("dash_token");
-      location.href = "/";
-      return;
-    }
+    if (ev.code === 4001) { sessionStorage.removeItem("dash_token"); location.href = "/"; return; }
     setTimeout(conectar, 3000);
   };
   ws.onmessage = (ev) => processar(JSON.parse(ev.data));
@@ -316,11 +349,10 @@ function setOnline(on) {
   document.getElementById("onlineDot").className = "online-dot" + (on ? " on" : "");
   document.getElementById("onlineTexto").textContent = on ? "online" : "offline";
   document.getElementById("btnAtualizar").disabled = !on;
-  document.querySelectorAll(".btn-cmd").forEach((b) => { b.disabled = !on; });
+  document.querySelectorAll(".btn-cmd, .btn-acao").forEach((b) => { b.disabled = !on; });
   document.getElementById("dial").style.pointerEvents = on ? "auto" : "none";
 }
 
-// --- Toast ---
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById("toast");
@@ -330,7 +362,6 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
 }
 
-// --- Comandos ---
 function atualizar() {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(JSON.stringify({ acao: "comando", comando: { comando: "status" } }));
@@ -346,23 +377,129 @@ function comando(nome) {
     travar: "Portas travadas", destravar: "Portas destravadas",
     vidro_subir: "Subindo vidros…", vidro_descer: "Descendo vidros…",
     armar: "Armando sistema…", desarmar: "Sistema desarmado",
+    liberar_combustivel: "Combustível liberado",
   };
   if (msgs[nome]) showToast(msgs[nome]);
   setTimeout(atualizar, 800);
 }
 
-// Dial: arma se desarmado, desarma se armado
 function toggleArmar() {
   if (estadoAtual === 0) comando("armar");
   else comando("desarmar");
 }
 
-// Pânico
+// --- Pânico ---
 function confirmarPanico() { document.getElementById("confirmaOverlay").classList.add("ativo"); }
 function fecharConfirma() { document.getElementById("confirmaOverlay").classList.remove("ativo"); }
 function executarPanico() { comando("panico"); showToast("⚠ Pânico acionado"); fecharConfirma(); }
 
-// Detalhes
+// --- Emergência ---
+function confirmarEmergencia() { document.getElementById("emergenciaOverlay").classList.add("ativo"); }
+function fecharEmergencia() { document.getElementById("emergenciaOverlay").classList.remove("ativo"); }
+function executarEmergencia() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) { showToast("Sem conexão"); fecharEmergencia(); return; }
+  ws.send(JSON.stringify({ acao: "comando", comando: { comando: "emergencia" } }));
+  showToast("🚨 Modo emergência ativado");
+  fecharEmergencia();
+  setTimeout(atualizar, 800);
+}
+
+// --- Corte de combustível ---
+function solicitarCorte() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) { showToast("Sem conexão"); return; }
+  ws.send(JSON.stringify({ acao: "comando", comando: { comando: "solicitar_corte_combustivel" } }));
+  showToast("Aguarde confirmação do motor parado…");
+  setTimeout(atualizar, 1500);
+}
+
+function confirmarCorte() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) { showToast("Sem conexão"); return; }
+  ws.send(JSON.stringify({ acao: "comando", comando: { comando: "confirmar_corte_combustivel" } }));
+  showToast("Corte de combustível confirmado");
+  pararTimerCorte();
+  setTimeout(atualizar, 800);
+}
+
+function iniciarTimerCorte() {
+  marcaTempoCorte = Date.now();
+  pararTimerCorte();
+  const el = document.getElementById("timerCorte");
+  el.style.display = "block";
+  timerCorteInterval = setInterval(() => {
+    const restante = 15 - Math.floor((Date.now() - marcaTempoCorte) / 1000);
+    if (restante <= 0) {
+      el.textContent = "Tempo esgotado — solicite novamente";
+      pararTimerCorte();
+      setTimeout(atualizar, 500);
+    } else {
+      el.textContent = "Confirme em " + restante + "s";
+    }
+  }, 500);
+}
+
+function pararTimerCorte() {
+  if (timerCorteInterval) { clearInterval(timerCorteInterval); timerCorteInterval = null; }
+}
+
+// Atualiza os botões de combustível com base no status do ESP32
+function atualizarBotoesCombustivel(d) {
+  const btnSolicitar = document.getElementById("btnSolicitar");
+  const btnConfirmar = document.getElementById("btnConfirmar");
+  const btnLiberar   = document.getElementById("btnLiberar");
+  const timerCorte   = document.getElementById("timerCorte");
+  const desc         = document.getElementById("descCombustivel");
+
+  if (d.bomba_cortada) {
+    // Bomba já cortada: só mostra botão de liberar
+    btnSolicitar.style.display = "none";
+    btnConfirmar.style.display = "none";
+    timerCorte.style.display   = "none";
+    btnLiberar.style.display   = "flex";
+    desc.textContent = "Bomba de combustível cortada";
+    pararTimerCorte();
+  } else if (d.aguardando_confirmacao_corte) {
+    // Aguardando confirmação: mostra confirmar + timer
+    btnSolicitar.style.display = "none";
+    btnConfirmar.style.display = "flex";
+    btnLiberar.style.display   = "none";
+    desc.textContent = "Motor parado confirmado — confirme o corte";
+    if (!timerCorteInterval) iniciarTimerCorte();
+  } else {
+    // Estado inicial: só solicitar
+    btnSolicitar.style.display = "flex";
+    btnConfirmar.style.display = "none";
+    timerCorte.style.display   = "none";
+    btnLiberar.style.display   = "none";
+    desc.textContent = d.motor_parado ? "Motor parado — pode solicitar corte" : "Motor deve estar parado";
+    pararTimerCorte();
+  }
+}
+
+// Atualiza o card de emergência com base no status
+function atualizarCardEmergencia(d) {
+  const btn  = document.getElementById("btnEmergencia");
+  const desc = document.getElementById("descEmergencia");
+  const chip = document.getElementById("chipEmergencia");
+
+  if (d.modo_emergencia) {
+    btn.textContent = "🚨 Emergência ATIVA";
+    btn.style.background = "#7f1d1d";
+    btn.disabled = true;
+    desc.textContent = d.bomba_cortada
+      ? "Corte efetuado — desarme para cancelar"
+      : "Aguardando velocidade segura para corte…";
+    chip.style.display = "inline-block";
+    chip.className = "chip emergencia";
+  } else {
+    btn.textContent = "🚨 Modo Emergência (Assalto)";
+    btn.style.background = "#dc2626";
+    btn.disabled = false;
+    desc.textContent = "Trava portas e corta o carro quando parar";
+    chip.style.display = "none";
+  }
+}
+
+// --- Detalhes ---
 function toggleDetalhes() {
   const body = document.getElementById("cardBodyDet");
   const chev = document.getElementById("chevronDet");
@@ -381,7 +518,6 @@ function atualizarStatus(d, horario) {
   const nome = ESTADOS[d.estado] || "?";
   const cor = corDoEstado(d.estado);
 
-  // Dial
   document.getElementById("dialEstado").textContent = nome;
   document.getElementById("dialEstado").style.color = cor;
   document.getElementById("dialLuz").style.background = cor;
@@ -389,13 +525,11 @@ function atualizarStatus(d, horario) {
   const dial = document.getElementById("dial");
   dial.style.borderColor = cor + "80";
   dial.style.boxShadow = "0 0 70px " + cor + "20, inset 0 1px 0 rgba(255,255,255,.06)";
-  const hint = d.estado === 0 ? "toque para armar" : (d.estado === 2 ? "toque para desarmar" : "");
-  document.getElementById("dialHint").textContent = hint;
+  document.getElementById("dialHint").textContent =
+    d.estado === 0 ? "toque para armar" : (d.estado === 2 ? "toque para desarmar" : "");
 
-  // Conexão e hora
   if (d.conexao) document.getElementById("conexao").textContent = d.conexao.toUpperCase();
 
-  // Chips
   const algumaAberta = d.porta_de || d.porta_dd || d.porta_te || d.porta_td;
   const chipP = document.getElementById("chipPortas");
   chipP.textContent = algumaAberta ? "Porta aberta" : "Portas fechadas";
@@ -407,22 +541,21 @@ function atualizarStatus(d, horario) {
 
   document.getElementById("chipGps").textContent = d.gps_fixo ? "GPS ok" : "GPS —";
 
-  // Detalhes
   setPorta("porta_de", d.porta_de);
   setPorta("porta_dd", d.porta_dd);
   setPorta("porta_te", d.porta_te);
   setPorta("porta_td", d.porta_td);
-
   setVal("ignicao", d.ignicao ? "Ligada" : "Desligada", d.ignicao ? "alerta" : "");
   setVal("bomba", d.bomba_cortada ? "Cortada" : "Liberada", d.bomba_cortada ? "alerta" : "");
   setVal("motor", d.motor_parado ? "Parado" : "Ligado", "neutro");
   setVal("vidro", d.vidro_em_movimento ? "Movendo" : "Parado", "neutro");
   setVal("gps_fixo", d.gps_fixo ? "Com sinal" : "Sem sinal", d.gps_fixo ? "ok" : "neutro");
+
+  atualizarBotoesCombustivel(d);
+  atualizarCardEmergencia(d);
 }
 
-function setPorta(id, aberta) {
-  setVal(id, aberta ? "Aberta" : "Fechada", aberta ? "alerta" : "");
-}
+function setPorta(id, aberta) { setVal(id, aberta ? "Aberta" : "Fechada", aberta ? "alerta" : ""); }
 function setVal(id, texto, classe) {
   const el = document.getElementById(id);
   el.textContent = texto;
@@ -437,6 +570,7 @@ function adicionarEvento(d, horario) {
   let cls = "evento";
   if (d.tipo === "disparo") cls += " disparo";
   if (d.tipo === "panico") cls += " panico";
+  if (d.tipo && d.tipo.startsWith("emergencia")) cls += " emergencia";
   div.className = cls;
   div.innerHTML = '<span class="t">' + (horario || "") + '</span><span>' + (d.descricao || d.tipo || "evento") + '</span>';
   cont.prepend(div);
@@ -449,10 +583,7 @@ conectar();
 let swRegistration = null;
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js")
-    .then((reg) => {
-      swRegistration = reg;
-      if (Notification.permission === "granted") inscreverPush(true);
-    })
+    .then((reg) => { swRegistration = reg; if (Notification.permission === "granted") inscreverPush(true); })
     .catch((err) => console.error("Erro SW:", err));
 }
 
@@ -470,38 +601,20 @@ async function inscreverPush(silencioso) {
     const { chave, habilitado } = await rv.json();
     if (!habilitado || !chave) { if (!silencioso) showToast("Push não configurado no servidor"); return false; }
     const reg = swRegistration || (await navigator.serviceWorker.ready);
-    const inscricao = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: base64ParaUint8(chave),
-    });
+    const inscricao = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64ParaUint8(chave) });
     const r = await fetch("/api/inscrever-push?token=" + token, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(inscricao),
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(inscricao),
     });
-    if (r.ok) {
-      btn.classList.add("ativo");
-      btn.title = "Notificações ativas";
-      return true;
-    }
+    if (r.ok) { btn.classList.add("ativo"); btn.title = "Notificações ativas"; return true; }
     if (!silencioso) showToast("Falha ao registrar push");
     return false;
-  } catch (e) {
-    console.error("Erro push:", e);
-    if (!silencioso) showToast("Erro ao ativar push");
-    return false;
-  }
+  } catch (e) { console.error("Erro push:", e); if (!silencioso) showToast("Erro ao ativar push"); return false; }
 }
 
 async function ativarNotificacoes() {
   const btn = document.getElementById("btnNotificacoes");
-  // Se já está ativo, avisa e não faz nada
-  if (btn.classList.contains("ativo")) {
-    showToast("Notificações já estão ativas");
-    return;
-  }
-  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-    showToast("Navegador não suporta notificações"); return;
-  }
+  if (btn.classList.contains("ativo")) { showToast("Notificações já estão ativas"); return; }
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) { showToast("Navegador não suporta notificações"); return; }
   const permissao = await Notification.requestPermission();
   if (permissao !== "granted") { showToast("Permissão negada"); return; }
   const ok = await inscreverPush(false);
