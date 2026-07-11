@@ -718,15 +718,18 @@ function conectar() {
 }
 
 function setOnline(on) {
-  const dot = document.getElementById("pulseDot");
-  dot.className = "pulse" + (on ? "" : " off");
-  const conexaoTxt = document.getElementById("conexao_txt") ? document.getElementById("conexao_txt").textContent : "";
-  document.getElementById("headerSub").innerHTML =
-    on ? `Online · <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg> · <span id="clockSpan">${new Date().toTimeString().slice(0,5)}</span>`
-       : "Offline — reconectando…";
+  // Controla botões e dial (dependem da conexão com o servidor)
   document.getElementById("btnAtualizar").disabled = !on;
   document.querySelectorAll(".btn-cmd, .btn-sec").forEach(b => { b.disabled = !on; });
   document.getElementById("dial").style.pointerEvents = on ? "auto" : "none";
+
+  if (!on) {
+    // Perdeu conexão com o servidor — ESP32 também inacessível
+    espOnline = false;
+    clearTimeout(timeoutEsp);
+    document.getElementById("pulseDot").className = "pulse off";
+    document.getElementById("headerSub").innerHTML = "Reconectando ao servidor…";
+  }
 }
 
 // Clock
@@ -757,6 +760,15 @@ function atualizar() {
   const btn = document.getElementById("btnAtualizar");
   btn.classList.add("girando");
   setTimeout(() => btn.classList.remove("girando"), 900);
+
+  // Se o ESP32 não responder em 8s, considera offline
+  clearTimeout(timeoutEsp);
+  timeoutEsp = setTimeout(() => {
+    if (!espOnline) return;
+    espOnline = false;
+    setEspStatus(false);
+    showToast("ESP32 não responde");
+  }, 8000);
 }
 
 function comando(nome) {
@@ -878,9 +890,45 @@ function atualizarEmergencia(d) {
 }
 
 // ── STATUS ──
+let timeoutEsp = null;
+let espOnline = false;
+
+function marcarEspOnline() {
+  espOnline = true;
+  clearTimeout(timeoutEsp);
+  timeoutEsp = null;
+  setEspStatus(true);
+}
+
+function setEspStatus(online) {
+  const dot = document.getElementById("pulseDot");
+  dot.className = "pulse" + (online ? "" : " off");
+  const sub = document.getElementById("headerSub");
+  if (online) {
+    sub.innerHTML = `Online · <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg> · <span id="clockSpan">${new Date().toTimeString().slice(0,5)}</span>`;
+  } else {
+    sub.innerHTML = `<span style="color:#f43f5e">ESP32 offline</span>`;
+  }
+}
+
 function processar(msg) {
-  if (msg.tipo === "status" && msg.dados) atualizarStatus(msg.dados, msg.horario);
-  else if (msg.tipo === "evento" && msg.dados) adicionarEvento(msg.dados, msg.horario);
+  if (msg.tipo === "status" && msg.dados) {
+    marcarEspOnline();
+    atualizarStatus(msg.dados, msg.horario);
+  } else if (msg.tipo === "evento" && msg.dados) {
+    adicionarEvento(msg.dados, msg.horario);
+  } else if (msg.tipo === "conexao") {
+    // LWT do broker: "online" ou "offline"
+    const txt = msg.dados && msg.dados._texto ? msg.dados._texto : "";
+    if (txt === "online") {
+      // ESP32 conectou — pede status pra confirmar
+      setTimeout(atualizar, 500);
+    } else if (txt === "offline") {
+      espOnline = false;
+      setEspStatus(false);
+      clearTimeout(timeoutEsp);
+    }
+  }
 }
 
 function atualizarStatus(d, horario) {
