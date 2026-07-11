@@ -39,16 +39,18 @@ body {
   display: flex;
   justify-content: center;
   overflow: hidden;
+  height: 100vh;
 }
 
 .app {
   width: 100%;
   max-width: 430px;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--surface);
   position: relative;
+  overflow: hidden;
 }
 
 /* ── HEADER ── */
@@ -170,20 +172,31 @@ body {
 
 /* ── CONTEÚDO DAS ABAS ── */
 .tabs-content {
-  flex: 1; overflow: hidden; position: relative;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  min-height: 0; /* essencial para flex + overflow funcionar */
 }
 
 .slider {
-  display: flex; height: 100%;
+  display: flex;
+  height: 100%;
   transition: transform .3s cubic-bezier(.4,0,.2,1);
 }
 
 .aba {
-  width: 100%; flex-shrink: 0;
-  overflow-y: auto; padding: 20px 20px 100px;
-  scrollbar-width: none;
+  width: 100%;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 20px 40px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.1) transparent;
+  -webkit-overflow-scrolling: touch;
 }
-.aba::-webkit-scrollbar { display: none; }
+.aba::-webkit-scrollbar { width: 3px; }
+.aba::-webkit-scrollbar-track { background: transparent; }
+.aba::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 
 /* ── ABA PRINCIPAL ── */
 .dial-area {
@@ -670,17 +683,22 @@ function posicionarIndicador() {
 window.addEventListener("resize", posicionarIndicador);
 setTimeout(posicionarIndicador, 100);
 
-// Swipe entre abas
-let tsX = null;
-document.getElementById("slider").addEventListener("touchstart", e => { tsX = e.touches[0].clientX; }, { passive: true });
+// Swipe entre abas (só horizontal, não conflita com scroll vertical)
+let tsX = null, tsY = null;
+document.getElementById("slider").addEventListener("touchstart", e => {
+  tsX = e.touches[0].clientX;
+  tsY = e.touches[0].clientY;
+}, { passive: true });
 document.getElementById("slider").addEventListener("touchend", e => {
   if (tsX === null) return;
   const dx = tsX - e.changedTouches[0].clientX;
-  if (Math.abs(dx) > 50) {
+  const dy = tsY - e.changedTouches[0].clientY;
+  // só troca aba se o movimento horizontal for mais forte que o vertical
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
     if (dx > 0 && abaAtual < totalAbas - 1) irAba(abaAtual + 1);
     else if (dx < 0 && abaAtual > 0) irAba(abaAtual - 1);
   }
-  tsX = null;
+  tsX = null; tsY = null;
 }, { passive: true });
 
 // ── WEBSOCKET ──
